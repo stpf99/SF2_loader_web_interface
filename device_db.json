@@ -1,0 +1,13 @@
+{
+  "devices": {
+    "USB Device 0x7104:0x2202:USB Device 0x7104:0x2202 MIDI 2 24:1": {
+      "cc_map": {
+        "11": "pan",
+        "2": "filter_res",
+        "0": "amp_a",
+        "32": "amp_r",
+        "1": "volume"
+      }
+    }
+  }
+}
