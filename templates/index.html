@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SF2 Player</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ── STATUS BAR ── -->
+  <div class="statusbar">
+    <div class="status-leds">
+      <div class="led-group"><span class="led" id="led-synth"></span><span class="led-lbl">SYN</span></div>
+      <div class="led-group"><span class="led" id="led-midi"></span><span class="led-lbl">MIDI</span></div>
+      <div class="led-group"><span class="led learn-led" id="led-learn"></span><span class="led-lbl">LRN</span></div>
+    </div>
+    <div class="app-title">SF2 <span>PLAYER</span></div>
+    <div class="voice-group">
+      <span class="voice-count" id="voice-count">0</span>
+      <span class="led-lbl">VOX</span>
+    </div>
+  </div>
+
+  <!-- ── SF2 SELECTOR ── -->
+  <div class="card">
+    <div class="card-label">SOUNDFONT</div>
+    <div class="sf2-row">
+      <div class="sf2-name" id="sf2-name">— tap ▶ to load —</div>
+      <button class="btn-load" onclick="UI.browseSF2()">▶</button>
+    </div>
+    <div class="select-row">
+      <div class="select-group">
+        <span class="sel-label">BANK</span>
+        <div class="arrow-sel">
+          <button class="arr" onclick="UI.bankStep(-1)">‹</button>
+          <select id="bank-sel" onchange="UI.onBankChange()"></select>
+          <button class="arr" onclick="UI.bankStep(1)">›</button>
+        </div>
+      </div>
+      <div class="select-group flex1">
+        <span class="sel-label">SOUND</span>
+        <div class="arrow-sel">
+          <button class="arr" onclick="UI.presetStep(-1)">‹</button>
+          <select id="preset-sel" onchange="UI.onPresetChange()"></select>
+          <button class="arr" onclick="UI.presetStep(1)">›</button>
+        </div>
+      </div>
+    </div>
+    <div class="select-row">
+      <div class="select-group">
+        <span class="sel-label">MIDI CH</span>
+        <select id="midi-ch" class="sel-sm">
+          <option value="0">All</option>
+          <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+          <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+          <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+          <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+          <option value="13">13</option><option value="14">14</option><option value="15">15</option>
+          <option value="16">16</option>
+        </select>
+      </div>
+      <div class="select-group">
+        <span class="sel-label">MONO</span>
+        <select id="mono-sel" class="sel-sm" onchange="UI.param('mono',this.value==='On'?127:0)">
+          <option>Off</option><option>On</option>
+        </select>
+      </div>
+      <div class="select-group">
+        <span class="sel-label">BEND±</span>
+        <select id="bend-range" class="sel-sm" onchange="UI.param('bend_range',+this.value)">
+          <option value="1">1</option><option value="2" selected>2</option>
+          <option value="7">7</option><option value="12">12</option><option value="24">24</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PERFORMANCE ── -->
+  <div class="card">
+    <div class="card-label">PERFORMANCE</div>
+    <div class="knob-strip">
+      <div class="knob-cell" data-param="volume">
+        <div class="knob-ring"><input type="range" class="arc" min="0" max="127" value="100" data-param="volume"
+          oninput="UI.param('volume',+this.value);UI.arcVal(this)"><svg class="arc-svg" viewBox="0 0 60 60"></svg></div>
+        <div class="knob-val" id="val-volume">100</div>
+        <div class="knob-name">VOL</div>
+      </div>
+      <div class="knob-cell" data-param="pan">
+        <div class="knob-ring"><input type="range" class="arc" min="0" max="127" value="64" data-param="pan"
+          oninput="UI.param('pan',+this.value);UI.arcVal(this)"><svg class="arc-svg" viewBox="0 0 60 60"></svg></div>
+        <div class="knob-val" id="val-pan">64</div>
+        <div class="knob-name">PAN</div>
+      </div>
+      <div class="knob-cell" data-param="expression">
+        <div class="knob-ring"><input type="range" class="arc" min="0" max="127" value="127" data-param="expression"
+          oninput="UI.param('expression',+this.value);UI.arcVal(this)"><svg class="arc-svg" viewBox="0 0 60 60"></svg></div>
+        <div class="knob-val" id="val-expression">127</div>
+        <div class="knob-name">EXPR</div>
+      </div>
+      <div class="knob-cell" data-param="modulation">
+        <div class="knob-ring"><input type="range" class="arc" min="0" max="127" value="0" data-param="modulation"
+          oninput="UI.param('modulation',+this.value);UI.arcVal(this)"><svg class="arc-svg" viewBox="0 0 60 60"></svg></div>
+        <div class="knob-val" id="val-modulation">0</div>
+        <div class="knob-name">MOD</div>
+      </div>
+      <div class="knob-cell" data-param="porta_time">
+        <div class="knob-ring"><input type="range" class="arc" min="0" max="127" value="0" data-param="porta_time"
+          oninput="UI.param('porta_time',+this.value);UI.arcVal(this)"><svg class="arc-svg" viewBox="0 0 60 60"></svg></div>
+        <div class="knob-val" id="val-porta_time">0</div>
+        <div class="knob-name">PORTA</div>
+      </div>
+      <div class="knob-cell" data-param="bend">
+        <div class="knob-ring"><input type="range" class="arc" min="0" max="127" value="64" data-param="bend"
+          oninput="UI.param('bend',+this.value);UI.arcVal(this)"><svg class="arc-svg" viewBox="0 0 60 60"></svg></div>
+        <div class="knob-val" id="val-bend">64</div>
+        <div class="knob-name">BEND</div>
+      </div>
+    </div>
+    <div class="toggle-row">
+      <button class="btn-tog" id="btn-sustain"  onclick="UI.toggleSustain()">SUSTAIN</button>
+      <button class="btn-tog" id="btn-porta-sw" onclick="UI.togglePortaSw()">PORTAMENTO</button>
+    </div>
+  </div>
+
+  <!-- ── AMP / FILTER ── -->
+  <div class="card">
+    <div class="card-label">AMP / FILTER <span class="card-sub">CC73·72·74·71</span></div>
+    <div class="knob-strip">
+      <div class="knob-cell" data-param="amp_a">
+        <div class="knob-ring"><input type="range" class="arc" min="0" max="127" value="0" data-param="amp_a"
+          oninput="UI.param('amp_a',+this.value);UI.arcVal(this)"><svg class="arc-svg" viewBox="0 0 60 60"></svg></div>
+        <div class="knob-val" id="val-amp_a">0</div>
+        <div class="knob-name">ATTACK</div>
+      </div>
+      <div class="knob-cell" data-param="amp_r">
+        <div class="knob-ring"><input type="range" class="arc" min="0" max="127" value="32" data-param="amp_r"
+          oninput="UI.param('amp_r',+this.value);UI.arcVal(this)"><svg class="arc-svg" viewBox="0 0 60 60"></svg></div>
+        <div class="knob-val" id="val-amp_r">32</div>
+        <div class="knob-name">RELEASE</div>
+      </div>
+      <div class="knob-cell" data-param="filter_cut">
+        <div class="knob-ring"><input type="range" class="arc" min="0" max="127" value="80" data-param="filter_cut"
+          oninput="UI.param('filter_cut',+this.value);UI.arcVal(this)"><svg class="arc-svg" viewBox="0 0 60 60"></svg></div>
+        <div class="knob-val" id="val-filter_cut">80</div>
+        <div class="knob-name">CUTOFF</div>
+      </div>
+      <div class="knob-cell" data-param="filter_res">
+        <div class="knob-ring"><input type="range" class="arc" min="0" max="127" value="0" data-param="filter_res"
+          oninput="UI.param('filter_res',+this.value);UI.arcVal(this)"><svg class="arc-svg" viewBox="0 0 60 60"></svg></div>
+        <div class="knob-val" id="val-filter_res">0</div>
+        <div class="knob-name">RESO</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REVERB ── -->
+  <div class="card">
+    <div class="card-label">
+      REVERB
+      <label class="onoff"><input type="checkbox" id="reverb-on" checked onchange="UI.param('reverb_on',this.checked?1:0)"><span class="onoff-sw"></span></label>
+    </div>
+    <div class="knob-strip">
+      <div class="knob-cell" data-param="rev_level">
+        <div class="knob-ring"><input type="range" class="arc accent2" min="0" max="127" value="20" data-param="rev_level"
+          oninput="UI.param('rev_level',+this.value);UI.arcVal(this)"><svg class="arc-svg" viewBox="0 0 60 60"></svg></div>
+        <div class="knob-val" id="val-rev_level">20</div>
+        <div class="knob-name">LEVEL</div>
+      </div>
+      <div class="knob-cell" data-param="rev_room">
+        <div class="knob-ring"><input type="range" class="arc accent2" min="0" max="127" value="40" data-param="rev_room"
+          oninput="UI.param('rev_room',+this.value);UI.arcVal(this)"><svg class="arc-svg" viewBox="0 0 60 60"></svg></div>
+        <div class="knob-val" id="val-rev_room">40</div>
+        <div class="knob-name">ROOM</div>
+      </div>
+      <div class="knob-cell" data-param="rev_damp">
+        <div class="knob-ring"><input type="range" class="arc accent2" min="0" max="127" value="50" data-param="rev_damp"
+          oninput="UI.param('rev_damp',+this.value);UI.arcVal(this)"><svg class="arc-svg" viewBox="0 0 60 60"></svg></div>
+        <div class="knob-val" id="val-rev_damp">50</div>
+        <div class="knob-name">DAMP</div>
+      </div>
+      <div class="knob-cell" data-param="rev_width">
+        <div class="knob-ring"><input type="range" class="arc accent2" min="0" max="127" value="64" data-param="rev_width"
+          oninput="UI.param('rev_width',+this.value);UI.arcVal(this)"><svg class="arc-svg" viewBox="0 0 60 60"></svg></div>
+        <div class="knob-val" id="val-rev_width">64</div>
+        <div class="knob-name">WIDTH</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CHORUS ── -->
+  <div class="card">
+    <div class="card-label">
+      CHORUS
+      <label class="onoff"><input type="checkbox" id="chorus-on" onchange="UI.param('chorus_on',this.checked?1:0)"><span class="onoff-sw"></span></label>
+    </div>
+    <div class="knob-strip">
+      <div class="knob-cell" data-param="cho_level">
+        <div class="knob-ring"><input type="range" class="arc amber" min="0" max="127" value="64" data-param="cho_level"
+          oninput="UI.param('cho_level',+this.value);UI.arcVal(this)"><svg class="arc-svg" viewBox="0 0 60 60"></svg></div>
+        <div class="knob-val" id="val-cho_level">64</div>
+        <div class="knob-name">LEVEL</div>
+      </div>
+      <div class="knob-cell" data-param="cho_speed">
+        <div class="knob-ring"><input type="range" class="arc amber" min="0" max="127" value="30" data-param="cho_speed"
+          oninput="UI.param('cho_speed',+this.value);UI.arcVal(this)"><svg class="arc-svg" viewBox="0 0 60 60"></svg></div>
+        <div class="knob-val" id="val-cho_speed">30</div>
+        <div class="knob-name">SPEED</div>
+      </div>
+      <div class="knob-cell" data-param="cho_depth">
+        <div class="knob-ring"><input type="range" class="arc amber" min="0" max="127" value="30" data-param="cho_depth"
+          oninput="UI.param('cho_depth',+this.value);UI.arcVal(this)"><svg class="arc-svg" viewBox="0 0 60 60"></svg></div>
+        <div class="knob-val" id="val-cho_depth">30</div>
+        <div class="knob-name">DEPTH</div>
+      </div>
+      <div class="knob-cell" data-param="cho_nr">
+        <div class="knob-ring"><input type="range" class="arc amber" min="0" max="99" value="3" data-param="cho_nr"
+          oninput="UI.param('cho_nr',+this.value);UI.arcVal(this)"><svg class="arc-svg" viewBox="0 0 60 60"></svg></div>
+        <div class="knob-val" id="val-cho_nr">3</div>
+        <div class="knob-name">NR</div>
+      </div>
+      <div class="knob-cell">
+        <div class="knob-name" style="margin-top:8px">TYPE</div>
+        <select id="cho-type" class="sel-sm" style="margin-top:6px" onchange="UI.param('cho_type',+this.value)">
+          <option value="0">Sine</option><option value="1">Tri</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── KEYBOARD ── -->
+  <div class="card card-kb">
+    <div class="card-label">KEYBOARD <span class="card-sub">C3–B4</span></div>
+    <div id="keyboard" class="keyboard"></div>
+  </div>
+
+  <!-- ── MIDI ── -->
+  <div class="card">
+    <div class="card-label">MIDI DEVICES</div>
+    <div class="midi-port-row">
+      <select id="midi-port-sel" class="sel-port"></select>
+      <button class="btn-sm" onclick="UI.refreshMidiPorts()">⟳</button>
+      <button class="btn-sm" onclick="UI.saveDeviceProfile()">💾</button>
+    </div>
+    <div class="learn-grid">
+      <span class="learn-label">LEARN:</span>
+      <button class="btn-learn" data-param="volume">Vol</button>
+      <button class="btn-learn" data-param="pan">Pan</button>
+      <button class="btn-learn" data-param="expression">Expr</button>
+      <button class="btn-learn" data-param="modulation">Mod</button>
+      <button class="btn-learn" data-param="filter_cut">Cut</button>
+      <button class="btn-learn" data-param="filter_res">Res</button>
+      <button class="btn-learn" data-param="amp_a">Atk</button>
+      <button class="btn-learn" data-param="amp_r">Rel</button>
+      <button class="btn-learn" data-param="porta_time">Pta</button>
+      <button class="btn-learn" data-param="rev_level">R.Lv</button>
+      <button class="btn-learn" data-param="rev_room">R.Rm</button>
+      <button class="btn-learn" data-param="cho_level">C.Lv</button>
+      <button class="btn-learn" data-param="cho_depth">C.Dp</button>
+      <button class="btn-sm btn-cancel" id="btn-cancel-learn" onclick="UI.cancelLearn()" style="display:none">✕</button>
+    </div>
+    <div id="cc-map-display" class="cc-map-display"></div>
+    <div class="midi-port-row" style="margin-top:8px">
+      <span class="learn-label">DETECTED:</span>
+      <button class="btn-sm" onclick="UI.showDetectedCCs()">Scan</button>
+      <div id="detected-ccs" class="detected-ccs"></div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- ── SF2 MODAL ── -->
+<div id="modal-overlay" class="modal-overlay" style="display:none" onclick="UI.closeModal(event)">
+  <div class="modal">
+    <div class="modal-title">SELECT SF2</div>
+    <select id="sf2-sel" size="10" class="sf2-list" ondblclick="UI.loadSelectedSF2()"></select>
+    <div class="modal-btns">
+      <button class="btn-modal" onclick="UI.loadSelectedSF2()">LOAD</button>
+      <button class="btn-modal btn-modal-cancel" onclick="UI.closeModalForce()">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
